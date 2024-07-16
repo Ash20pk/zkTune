@@ -4,11 +4,11 @@ import { utils } from "zksync-ethers";
 export const zkTuneABI = zkTune;
 
 export const zkTunecontractconfig = {
-  address: "0xF6fD542642468c476ca261656686985f343f57A5",
+  address: "0xf68d91f5a76d504B9404d2B30E73456E770C4cdd",
   abi: zkTuneABI.abi,
 } as const;
 
-export const paymasterParams = utils.getPaymasterParams("0xEfD93FFC523aB31DeC32946f5bb2B102f33C0338", {
+export const paymasterParams = utils.getPaymasterParams("0xC41C0143a57CCc4d441da2e46325e1048AD02bD6", {
   type: "General",
   innerInput: new Uint8Array(),
 });

@@ -1,4 +1,4 @@
-'use client'
+'use client';
 
 import React, { useEffect, useState } from 'react';
 import { Box, Heading, Text, VStack, SimpleGrid, Image, Button, Spinner } from "@chakra-ui/react";
@@ -6,7 +6,7 @@ import { Contract } from 'zksync-ethers';
 import { useEthereum } from './Context';
 import { zkTunecontractconfig } from './contract';
 import SongNFTABI from "../ABI/SongNFT.json";
-import { useRouter } from 'next/router';
+import { useRouter } from 'next/navigation';
 
 interface Artist {
   name: string;

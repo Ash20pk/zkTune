@@ -91,10 +91,11 @@ export function MainContent() {
         }
 
         const tx = await contract.streamSong(song.id, txOverrides)
-        tx.wait();
+        tx.wait(2);
     }
     const playSong = async (song: Song) => {
         const signer = await getSigner();
+        const provider = await getProvider();
         const SongNFTContract = new Contract(song.contractAddress, SongNFTABI.abi, signer);
         const contract = new Contract(zkTunecontractconfig.address, zkTunecontractconfig.abi, signer);
         if (await SongNFTContract.balanceOf(account.address?.toString()) > 0){
@@ -113,15 +114,43 @@ export function MainContent() {
             setCurrentSong(currentSong);
         } else {
             console.log("Minting Song");
-            await mintNFT(song)
-            const currentSong = await SongNFTContract.getInfo(account.address?.toString())
-            setCurrentSong(currentSong);
+            await mintNFT(song);
+            
+            // Check for the minted NFT every 2 seconds for up to 10 seconds
+            const checkForMintedNFT = async (attempts = 5) => {
+                if (attempts === 0) {
+                    console.error("NFT minting timeout. Please check your transaction.");
+                    return;
+                }
     
+                if (await SongNFTContract.balanceOf(account.address?.toString()) > 0) {
+                    console.log("NFT Minted successfully");
+                    const songData = await SongNFTContract.getInfo(account.address?.toString());
+                    const currentSong = {
+                        id: songData[0].toString(),
+                        title: await SongNFTContract.name(),
+                        artist: (await contract.artists(songData[1]))[0],
+                        cover: songData[3],
+                        audioUrl: songData[2],
+                        source: 'contract',
+                        streamCount: 0,
+                        contractAddress: ""
+                    }
+                    setCurrentSong(currentSong);
+                } else {
+                    console.log(`Waiting for NFT to be minted. Attempts left: ${attempts}`);
+                    setTimeout(() => checkForMintedNFT(attempts - 1), 2000);
+                }
+            };
+    
+            checkForMintedNFT();
+          
         }
     };
 
     useEffect(() => {
       console.log("Fetching songs...");
+      console.log(songs);
       const fetchSongs = async () => {
         try {
           const formattedSongs = songs.map((song: any, index: number) => ({
@@ -130,7 +159,7 @@ export function MainContent() {
             artist: song.artist,
             cover: song.cover || "https://via.placeholder.com/300",
             audioUrl: song.audioUrl,
-            streamCount: song.streamCount,
+            streamCount: Number(song.streamCount.toString()),
             contractAddress: song.contractAddress,
 
           }));
@@ -166,14 +195,14 @@ export function MainContent() {
 
           }));
     
-          // Take the top 5 songs
+          // Take the top 5 artists
           const popularArtists = formattedArtists.slice(0, 5);
     
           console.log("Popular 5 artists:", popularArtists);
           setPopularArtists(popularArtists);
-          console.log("Fetched songs completed successfully"); 
+          console.log("Fetched artists completed successfully"); 
         } catch (error) {
-          console.error("Error fetching songs:", error);
+          console.error("Error fetching artists:", error);
         }
       };
     
@@ -204,7 +233,7 @@ export function MainContent() {
             <Box mb={12}>
               <Heading size="lg" mb={6}>Popular Songs</Heading>
               <SimpleGrid columns={5} spacing={6}>
-                {popularSongs.map((song) => (
+                {songs.map((song) => (
                   <Box key={song.id.toString()} bg="gray.800" borderRadius="lg" overflow="hidden" transition="all 0.3s" _hover={{ bg: "gray.700", transform: "scale(1.05)" }} onClick={() => playSong(song)} cursor="pointer">
                     <Box position="relative">
                       <Img src={song.cover} alt={song.title} />

@@ -10,6 +10,11 @@ contract zkTune is Ownable {
         string profileURI;
     }
 
+    struct User {
+        string name;
+        string profileURI;
+    }
+
     struct Song {
         uint256 id;
         address artist;
@@ -21,19 +26,29 @@ contract zkTune is Ownable {
     }
 
     mapping(address => Artist) public artists;
+    mapping(address => User) public users;
     mapping(uint256 => Song) public songs;
     mapping(uint256 => mapping(address => bool)) public userHasNFT;
+    mapping(address => uint256[]) public artistSongs;
 
     address[] public artistAddresses;
     uint256[] public songIds;
     uint256 private _currentSongId;
+    uint256 public totalSongs;
+    uint256 public totalUsers;
+    uint256 public totalArtists;
+
 
     event ArtistRegistered(address indexed artistAddress, string name);
+    event UserRegistered(address indexed userAddress, string name);
     event SongAdded(uint256 indexed songId, address indexed artist, string title);
     event SongStreamed(uint256 indexed songId, address indexed listener);
 
     constructor() {
         _currentSongId = 0;
+        totalSongs = 0;
+        totalUsers = 0;
+        totalArtists = 0;
     }
 
     modifier onlyRegisteredArtist() {
@@ -50,7 +65,15 @@ contract zkTune is Ownable {
         require(bytes(artists[msg.sender].name).length == 0, "Artist already registered");
         artists[msg.sender] = Artist(_name, _profileURI);
         artistAddresses.push(msg.sender);
+        totalArtists++;
         emit ArtistRegistered(msg.sender, _name);
+    }
+
+    function registerUser(string memory _name, string memory _profileURI) external {
+        require(bytes(users[msg.sender].name).length == 0, "User already registered");
+        users[msg.sender] = User(_name, _profileURI);
+        totalUsers++;
+        emit UserRegistered(msg.sender, _name);
     }
 
     function addSong(string memory _title, string memory _audioURI, string memory _coverURI, uint256 _nftPrice) external onlyRegisteredArtist {
@@ -62,6 +85,9 @@ contract zkTune is Ownable {
 
         songs[newSongId] = Song(newSongId, msg.sender, _title, _audioURI, _coverURI, 0, address(songNFT));
         songIds.push(newSongId);
+
+        artistSongs[msg.sender].push(newSongId);
+        totalSongs++;
 
         emit SongAdded(newSongId, msg.sender, _title);
     }
@@ -101,5 +127,16 @@ contract zkTune is Ownable {
             allArtists[i] = artists[artistAddresses[i]];
         }
         return allArtists;
+    }
+
+    function getSongsByArtist(address _artist) external view returns (Song[] memory) {
+        uint256[] memory artistSongIds = artistSongs[_artist];
+        Song[] memory artistSongsArray = new Song[](artistSongIds.length);
+
+        for (uint256 i = 0; i < artistSongIds.length; i++) {
+            artistSongsArray[i] = songs[artistSongIds[i]];
+        }
+
+        return artistSongsArray;
     }
 }
