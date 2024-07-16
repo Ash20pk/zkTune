@@ -233,7 +233,7 @@ export function MainContent() {
             <Box mb={12}>
               <Heading size="lg" mb={6}>Popular Songs</Heading>
               <SimpleGrid columns={5} spacing={6}>
-                {songs.map((song) => (
+                {popularSongs.map((song) => (
                   <Box key={song.id.toString()} bg="gray.800" borderRadius="lg" overflow="hidden" transition="all 0.3s" _hover={{ bg: "gray.700", transform: "scale(1.05)" }} onClick={() => playSong(song)} cursor="pointer">
                     <Box position="relative">
                       <Img src={song.cover} alt={song.title} />
