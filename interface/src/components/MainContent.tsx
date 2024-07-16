@@ -10,6 +10,7 @@ import { Contract, utils } from 'zksync-ethers';
 import { zkTunecontractconfig, paymasterParams } from './contract';
 import { ethers } from "ethers";
 import SongNFTABI from "../ABI/SongNFT.json";
+import { useFetchArtists } from './fetchArtists';
 
 
 interface Song {
@@ -52,7 +53,8 @@ const popularArtists: Artist[] = [
 export function MainContent() {
     const [recentlyPlayed, setRecentlyPlayed] = useState<Song[]>([]);
     const {account, getProvider, getSigner} = useEthereum();
-    const {songs, loading, error } = useFetchSongs(5);
+    const {songs, loading, error } = useFetchSongs();
+    const {artists} = useFetchArtists();
     const [currentSong, setCurrentSong] = useState<Song | null>(null);
 
     const mintNFT = async (song: Song) => {
@@ -146,7 +148,7 @@ export function MainContent() {
           <Heading size="2xl">Good afternoon</Heading>
           <Flex alignItems="center">
             <Connect />
-            <Link href="/profile" passHref>
+            {/* <Link href="/profile" passHref>
               <IconButton
                 as="a"
                 aria-label="Profile"
@@ -156,7 +158,7 @@ export function MainContent() {
                 ml={4}
                 color="white"
               />
-            </Link>
+            </Link> */}
           </Flex>
         </Flex>
       <Box mb={12}>
@@ -202,10 +204,10 @@ export function MainContent() {
       <Box>
         <Heading size="lg" mb={6}>Popular artists</Heading>
         <SimpleGrid columns={4} spacing={6}>
-          {popularArtists.map((artist) => (
+          {artists.map((artist) => (
             <VStack key={artist.id} align="center">
               <Box position="relative" borderRadius="full" overflow="hidden">
-                <Image src={artist.cover} alt={artist.name} borderRadius="full" />
+                <Image src={artist.profileURI} alt={artist.name} borderRadius="full" />
                 <Box position="absolute" top="0" left="0" right="0" bottom="0" bg="blackAlpha.600" opacity="0" transition="all 0.3s" _groupHover={{ opacity: 1 }} borderRadius="full">
                   <Icon as={FaPlay} position="absolute" top="50%" left="50%" transform="translate(-50%, -50%)" boxSize={12} color="green.500" />
                 </Box>

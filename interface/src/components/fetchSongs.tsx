@@ -16,7 +16,7 @@ interface Song {
   contractAddress: string;
 }
 
-export function useFetchSongs(limit = 5) {
+export function useFetchSongs() {
   const [songs, setSongs] = useState<Song[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -51,7 +51,7 @@ export function useFetchSongs(limit = 5) {
     }
 
     fetchSongs();
-  }, [getProvider, limit]);
+  }, [getProvider]);
 
   return { songs, loading, error };
 }
