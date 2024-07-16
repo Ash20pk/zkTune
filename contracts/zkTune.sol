@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import "./SongNFT.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract ZkTune is Ownable {
+contract zkTune is Ownable {
     struct Artist {
         string name;
         string profileURI;
@@ -20,16 +20,9 @@ contract ZkTune is Ownable {
         address songNFTAddress;
     }
 
-    struct Playlist {
-        string name;
-        uint256[] songIds;
-    }
-
     mapping(address => Artist) public artists;
     mapping(uint256 => Song) public songs;
     mapping(uint256 => mapping(address => bool)) public userHasNFT;
-    mapping(address => mapping(string => Playlist)) public playlists;
-    mapping(address => string[]) public userPlaylistNames;
 
     address[] public artistAddresses;
     uint256[] public songIds;
@@ -38,8 +31,6 @@ contract ZkTune is Ownable {
     event ArtistRegistered(address indexed artistAddress, string name);
     event SongAdded(uint256 indexed songId, address indexed artist, string title);
     event SongStreamed(uint256 indexed songId, address indexed listener);
-    event PlaylistCreated(address indexed creator, string name);
-    event SongAddedToPlaylist(address indexed creator, string playlistName, uint256 songId);
 
     constructor() {
         _currentSongId = 0;
@@ -52,11 +43,6 @@ contract ZkTune is Ownable {
 
     modifier songExists(uint256 _songId) {
         require(songs[_songId].id != 0, "Song does not exist");
-        _;
-    }
-
-    modifier playlistExists(address _creator, string memory _name) {
-        require(playlists[_creator][_name].songIds.length > 0, "Playlist does not exist");
         _;
     }
 
@@ -101,31 +87,6 @@ contract ZkTune is Ownable {
         }
     }
 
-    function createPlaylist(string memory _name) external {
-        require(playlists[msg.sender][_name].songIds.length == 0, "Playlist already exists");
-        playlists[msg.sender][_name] = Playlist(_name, new uint256[](0));
-        userPlaylistNames[msg.sender].push(_name);
-        emit PlaylistCreated(msg.sender, _name);
-    }
-
-    function addSongToPlaylist(string memory _playlistName, uint256 _songId) external songExists(_songId) playlistExists(msg.sender, _playlistName) {
-        playlists[msg.sender][_playlistName].songIds.push(_songId);
-        emit SongAddedToPlaylist(msg.sender, _playlistName, _songId);
-    }
-
-    function getPlaylist(address _user, string memory _playlistName) external view returns (uint256[] memory) {
-        return playlists[_user][_playlistName].songIds;
-    }
-
-    function getUserPlaylists(address _user) external view returns (Playlist[] memory) {
-        string[] storage playlistNames = userPlaylistNames[_user];
-        Playlist[] memory userPlaylists = new Playlist[](playlistNames.length);
-        for (uint256 i = 0; i < playlistNames.length; i++) {
-            userPlaylists[i] = playlists[_user][playlistNames[i]];
-        }
-        return userPlaylists;
-    }
-
     function getAllSongs() external view returns (Song[] memory) {
         Song[] memory allSongs = new Song[](songIds.length);
         for (uint256 i = 0; i < songIds.length; i++) {
@@ -140,23 +101,5 @@ contract ZkTune is Ownable {
             allArtists[i] = artists[artistAddresses[i]];
         }
         return allArtists;
-    }
-
-    function getAllPlaylists() external view returns (Playlist[] memory) {
-        uint256 totalPlaylists = 0;
-        for (uint256 i = 0; i < artistAddresses.length; i++) {
-            totalPlaylists += userPlaylistNames[artistAddresses[i]].length;
-        }
-
-        Playlist[] memory allPlaylists = new Playlist[](totalPlaylists);
-        uint256 index = 0;
-        for (uint256 i = 0; i < artistAddresses.length; i++) {
-            string[] storage playlistNames = userPlaylistNames[artistAddresses[i]];
-            for (uint256 j = 0; j < playlistNames.length; j++) {
-                allPlaylists[index] = playlists[artistAddresses[i]][playlistNames[j]];
-                index++;
-            }
-        }
-        return allPlaylists;
     }
 }
