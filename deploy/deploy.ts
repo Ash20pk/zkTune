@@ -6,7 +6,7 @@ export default async function () {
   const PaymasterArguments = [];
   await deployContract(Paymaster, PaymasterArguments);
 
-  const contractArtifactName = "ZkTune";
+  const contractArtifactName = "zkTune";
   const dAppArguments = [];
   await deployContract(contractArtifactName, dAppArguments);
 }
