@@ -23,39 +23,42 @@ interface Song {
   contractAddress: string
 }
 
-interface Playlist {
-  id: number
-  title: string
-  cover: string
-  description: string
-}
-
 interface Artist {
-  id: number
-  name: string
-  cover: string
+  id: string;
+  name: string;
+  profileURI: string;
 }
 
-const featuredPlaylists: Playlist[] = [
-  { id: 1, title: "Today's Top Hits", cover: "https://via.placeholder.com/300", description: "The hottest tracks right now" },
-  { id: 2, title: "Chill Vibes", cover: "https://via.placeholder.com/300", description: "Lay back and unwind" },
-  { id: 3, title: "Workout Beats", cover: "https://via.placeholder.com/300", description: "Energy-pumping music for your workout" },
-  { id: 4, title: "Indie Mix", cover: "https://via.placeholder.com/300", description: "The best of independent artists" },
-]
-
-const popularArtists: Artist[] = [
-  { id: 1, name: "Ariana Grande", cover: "https://via.placeholder.com/300" },
-  { id: 2, name: "Drake", cover: "https://via.placeholder.com/300" },
-  { id: 3, name: "Billie Eilish", cover: "https://via.placeholder.com/300" },
-  { id: 4, name: "Post Malone", cover: "https://via.placeholder.com/300" },
-]
 
 export function MainContent() {
-    const [recentlyPlayed, setRecentlyPlayed] = useState<Song[]>([]);
+    const [popularSongs, setPopularSongs] = useState<Song[]>([]);
+    const [popularArtists, setPopularArtists] = useState<Artist[]>([]);
     const {account, getProvider, getSigner} = useEthereum();
-    const {songs, loading, error } = useFetchSongs();
+    const {songs} = useFetchSongs();
     const {artists} = useFetchArtists();
     const [currentSong, setCurrentSong] = useState<Song | null>(null);
+    const [greeting, setGreeting] = useState(getGreeting());
+
+    function getGreeting(): string {
+      const hour = new Date().getHours();
+      if (hour >= 5 && hour < 12) {
+        return "Good morning";
+      } else if (hour >= 12 && hour < 18) {
+        return "Good afternoon";
+      } else if (hour >= 18 && hour < 22) {
+        return "Good evening";
+      } else {
+        return "Good night";
+      }
+    }
+
+    useEffect(() => {
+      const timer = setInterval(() => {
+        setGreeting(getGreeting());
+      }, 60000); // Update every minute
+  
+      return () => clearInterval(timer);
+    }, []);
 
     const mintNFT = async (song: Song) => {
         const provider = await getProvider();
@@ -117,35 +120,70 @@ export function MainContent() {
         }
     };
 
+    useEffect(() => {
+      console.log("Fetching songs...");
+      const fetchSongs = async () => {
+        try {
+          const formattedSongs = songs.map((song: any, index: number) => ({
+            id: song.id || (index + 1).toString(),
+            title: song.title,
+            artist: song.artist,
+            cover: song.cover || "https://via.placeholder.com/300",
+            audioUrl: song.audioUrl,
+            streamCount: song.streamCount,
+            contractAddress: song.contractAddress,
+
+          }));
+    
+          // Sort songs by stream count in descending order
+          const sortedSongs = formattedSongs.sort((a, b) => 
+            b.streamCount - a.streamCount
+          );
+    
+          // Take the top 5 songs
+          const PopularSongs = sortedSongs.slice(0, 5);
+    
+          console.log("Popular 5 songs:", PopularSongs);
+          setPopularSongs(PopularSongs);
+          console.log("Fetched songs completed successfully"); 
+        } catch (error) {
+          console.error("Error fetching songs:", error);
+        }
+      };
+    
+      fetchSongs();
+    }, [account, songs]); 
 
     useEffect(() => {
-        console.log("Fetching songs...");
-        const fetchSongs = async () => {
-            try {
-                const formattedSongs = songs.map((song: any, index: number) => ({
-                    id: song.id || (index + 1).toString(),
-                    title: song.title,
-                    artist: song.artist,
-                    cover: song.cover || "https://via.placeholder.com/300",
-                    audioUrl: song.audioUrl,
-                    streamCount: song.streamCount,
-                    contractAddress: song.contractAddress
-                  }));
-                  console.log(formattedSongs);
-              setRecentlyPlayed(formattedSongs)
-              console.log("Fetched songs completed successfully"); 
-            } catch (error) {
-              console.error("Error fetching songs:", error)
-            }
-          }
-    
-        fetchSongs()
-      }, [account])
+      console.log("Fetching artists...");
+      const fetchArtists = async () => {
+        try {
+          console.log(artists);
+          const formattedArtists = artists.map((artist: any, index: number) => ({
+            id: (index + 1).toString(),
+            name: artist.name,
+            profileURI: artist.profileURI,
 
-  return (
-    <Box flex="1" bg="gray.900" color="white" overflowY="auto" p={8}>
+          }));
+    
+          // Take the top 5 songs
+          const popularArtists = formattedArtists.slice(0, 5);
+    
+          console.log("Popular 5 artists:", popularArtists);
+          setPopularArtists(popularArtists);
+          console.log("Fetched songs completed successfully"); 
+        } catch (error) {
+          console.error("Error fetching songs:", error);
+        }
+      };
+    
+      fetchArtists();
+    }, [account, artists]); 
+
+    return (      
+      <Box flex="1" bg="gray.800" color="white" overflowY="auto" p={8}>
         <Flex justifyContent="space-between" alignItems="center" mb={8}>
-          <Heading size="2xl">Good afternoon</Heading>
+          <Heading size="2xl">{greeting}</Heading>
           <Flex alignItems="center">
             <Connect />
             {/* <Link href="/profile" passHref>
@@ -161,72 +199,85 @@ export function MainContent() {
             </Link> */}
           </Flex>
         </Flex>
-      <Box mb={12}>
-        <Heading size="lg" mb={6}>Recently played</Heading>
-        <SimpleGrid columns={5} spacing={6}>
-          {songs.map((song) => (
-            <Box key={song.id.toString()} bg="gray.800" borderRadius="lg" overflow="hidden" transition="all 0.3s" _hover={{ bg: "gray.700", transform: "scale(1.05)" }} onClick={() => playSong(song)} cursor="pointer">
-              <Box position="relative">
-                <Img src={song.cover} alt={song.title} />
-                <Box position="absolute" top="0" left="0" right="0" bottom="0" bg="blackAlpha.600" opacity="0" transition="all 0.3s" _groupHover={{ opacity: 1 }}>
-                  <Icon as={FaPlay} position="absolute" top="50%" left="50%" transform="translate(-50%, -50%)" boxSize={12} color="green.500" />
-                </Box>
-              </Box>
-              <Box p={4}>
-                <Text fontWeight="semibold" isTruncated>{song.title}</Text>
-                <Text fontSize="sm" color="gray.400" isTruncated>{song.artist}</Text>
-              </Box>
+        {account.isConnected ? (
+          <>
+            <Box mb={12}>
+              <Heading size="lg" mb={6}>Popular Songs</Heading>
+              <SimpleGrid columns={5} spacing={6}>
+                {popularSongs.map((song) => (
+                  <Box key={song.id.toString()} bg="gray.800" borderRadius="lg" overflow="hidden" transition="all 0.3s" _hover={{ bg: "gray.700", transform: "scale(1.05)" }} onClick={() => playSong(song)} cursor="pointer">
+                    <Box position="relative">
+                      <Img src={song.cover} alt={song.title} />
+                      <Box position="absolute" top="0" left="0" right="0" bottom="0" bg="blackAlpha.600" opacity="0" transition="all 0.3s" _groupHover={{ opacity: 1 }}>
+                        <Icon as={FaPlay} position="absolute" top="50%" left="50%" transform="translate(-50%, -50%)" boxSize={12} color="green.500" />
+                      </Box>
+                    </Box>
+                    <Box p={4}>
+                      <Text fontWeight="semibold" isTruncated>{song.title}</Text>
+                      <Text fontSize="sm" color="gray.400" isTruncated>{song.artist}</Text>
+                    </Box>
+                  </Box>
+                ))}
+              </SimpleGrid>
             </Box>
-          ))}
-        </SimpleGrid>
-      </Box>
 
-      {/* <Box mb={12}>
-        <Heading size="lg" mb={6}>Featured playlists</Heading>
-        <SimpleGrid columns={4} spacing={6}>
-          {featuredPlaylists.map((playlist) => (
-            <Box key={playlist.id} bg="gray.800" borderRadius="lg" overflow="hidden" transition="all 0.3s" _hover={{ bg: "gray.700", transform: "scale(1.05)" }}>
-              <Box position="relative">
-                <Image src={playlist.cover} alt={playlist.title} />
-                <Box position="absolute" top="0" left="0" right="0" bottom="0" bg="blackAlpha.600" opacity="0" transition="all 0.3s" _groupHover={{ opacity: 1 }}>
-                  <Icon as={FaPlay} position="absolute" top="50%" left="50%" transform="translate(-50%, -50%)" boxSize={12} color="green.500" />
-                </Box>
-              </Box>
-              <Box p={4}>
-                <Text fontWeight="semibold" isTruncated>{playlist.title}</Text>
-                <Text fontSize="sm" color="gray.400" isTruncated>{playlist.description}</Text>
-              </Box>
+            <Box>
+              <Heading size="lg" mb={4}>Popular artists</Heading>
+              <SimpleGrid columns={5} spacing={6}> 
+                {popularArtists.map((artist) => (
+                  <VStack key={artist.id} align="center" spacing={2}> 
+                    <Box 
+                      position="relative" 
+                      borderRadius="full" 
+                      overflow="hidden"
+                      w="120px"  
+                      h="120px"
+                      boxShadow="md"
+                    >
+                      <Image 
+                        src={artist.profileURI} 
+                        alt={artist.name} 
+                        borderRadius="full" 
+                        objectFit="cover"
+                        w="100%"
+                        h="100%"
+                      />
+                      <Box 
+                        position="absolute" 
+                        top="0" 
+                        left="0" 
+                        right="0" 
+                        bottom="0" 
+                        bg="blackAlpha.600" 
+                        opacity="0" 
+                        transition="all 0.3s" 
+                        _hover={{ opacity: 1 }}
+                        borderRadius="full"
+                        display="flex"
+                        alignItems="center"
+                        justifyContent="center"
+                      >
+                      </Box>
+                    </Box>
+                    <Text fontWeight="semibold" fontSize="sm">{artist.name}</Text>
+                  </VStack>
+                ))}
+              </SimpleGrid>
             </Box>
-          ))}
-        </SimpleGrid>
-      </Box> */}
-
-      <Box>
-        <Heading size="lg" mb={6}>Popular artists</Heading>
-        <SimpleGrid columns={4} spacing={6}>
-          {artists.map((artist) => (
-            <VStack key={artist.id} align="center">
-              <Box position="relative" borderRadius="full" overflow="hidden">
-                <Image src={artist.profileURI} alt={artist.name} borderRadius="full" />
-                <Box position="absolute" top="0" left="0" right="0" bottom="0" bg="blackAlpha.600" opacity="0" transition="all 0.3s" _groupHover={{ opacity: 1 }} borderRadius="full">
-                  <Icon as={FaPlay} position="absolute" top="50%" left="50%" transform="translate(-50%, -50%)" boxSize={12} color="green.500" />
-                </Box>
+            {currentSong && (
+              <Box position="fixed" bottom={0} left={0} right={0}>
+                <Player 
+                  audioUrl={currentSong.audioUrl} 
+                  title={currentSong.title} 
+                  artist={currentSong.artist} 
+                  cover={currentSong.cover}
+                />
               </Box>
-              <Text fontWeight="semibold">{artist.name}</Text>
-            </VStack>
-          ))}
-        </SimpleGrid>
-      </Box>
-      {currentSong && (
-                <Box position="fixed" bottom={0} left={0} right={0}>
-                    <Player 
-                        audioUrl={currentSong.audioUrl} 
-                        title={currentSong.title} 
-                        artist={currentSong.artist} 
-                        cover={currentSong.cover}
-                    />
-                </Box>
             )}
-    </Box>
-  )
+          </>
+        ) : (
+          <Heading>Please connect your wallet</Heading>
+        )}
+      </Box> 
+    )
 }
