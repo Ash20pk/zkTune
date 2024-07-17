@@ -71,7 +71,7 @@ export function Player({ audioUrl, title, artist, cover }: PlayerProps) {
   };
 
   return (
-    <Flex h="90px" bg="gray.900" borderTop="1px" borderColor="gray.800" alignItems="center" px={4}>
+    <Flex h="90px" bg="black" borderTop="1px" borderColor="gray.800" alignItems="center" px={4}>
       <Flex w="30%" alignItems="center">
         <Image src={cover} alt="Album cover" w="60px" h="60px" mr={4} />
         <Box>
@@ -104,7 +104,7 @@ export function Player({ audioUrl, title, artist, cover }: PlayerProps) {
           <SliderThumb boxSize={3} />
         </Slider>
       </Flex>
-      <Flex w="30%" justifyContent="flex-end" alignItems="center">
+      <Flex w="30%" justifyContent="flex-end" alignItems="center" mr={5}>
         <Icon 
           as={isMuted ? FaVolumeMute : FaVolumeUp} 
           boxSize={4} 
@@ -119,7 +119,7 @@ export function Player({ audioUrl, title, artist, cover }: PlayerProps) {
           min={0}
           max={1}
           step={0.01}
-          w="120px"
+          w="80px"
         >
           <SliderTrack bg="gray.600">
             <SliderFilledTrack bg="green.500" />

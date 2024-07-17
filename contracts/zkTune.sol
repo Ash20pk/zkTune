@@ -30,6 +30,7 @@ contract zkTune is Ownable {
     mapping(uint256 => Song) public songs;
     mapping(uint256 => mapping(address => bool)) public userHasNFT;
     mapping(address => uint256[]) public artistSongs;
+    mapping(address => uint256[]) public userStreams;
 
     address[] public artistAddresses;
     uint256[] public songIds;
@@ -106,6 +107,10 @@ contract zkTune is Ownable {
 
             // Increment stream count
             song.streamCount++;
+
+            //Add the song to user stream list
+            userStreams[msg.sender].push(_songId);
+
             emit SongStreamed(_songId, msg.sender);
 
             // Return the audio URI
@@ -138,5 +143,16 @@ contract zkTune is Ownable {
         }
 
         return artistSongsArray;
+    }
+
+    function getSongsStreamedByUser(address _user) external view returns (Song[] memory) {
+        uint256[] memory userStreamedSongIds = userStreams[_user];
+        Song[] memory userStreamedSongs = new Song[](userStreamedSongIds.length);
+
+        for (uint256 i = 0; i < userStreamedSongIds.length; i++) {
+            userStreamedSongs[i] = songs[userStreamedSongIds[i]];
+        }
+
+        return userStreamedSongs;
     }
 }

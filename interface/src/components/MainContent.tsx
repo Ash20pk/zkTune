@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
-import { Box, Heading, SimpleGrid, Image, Text, VStack, Icon, Flex, Img, IconButton } from "@chakra-ui/react"
-import { FaPlay, FaUser } from "react-icons/fa"
+import { Box, Heading, SimpleGrid, Image, Text, VStack, Icon, Flex, Img, IconButton, Skeleton } from "@chakra-ui/react"
+import { FaPlay } from "react-icons/fa"
+import { CgProfile } from "react-icons/cg";
 import Link from 'next/link';
 import { Connect } from '../components/Connect'
 import { useFetchSongs } from './fetchSongs';
@@ -34,21 +35,22 @@ export function MainContent() {
     const [popularSongs, setPopularSongs] = useState<Song[]>([]);
     const [popularArtists, setPopularArtists] = useState<Artist[]>([]);
     const {account, getProvider, getSigner} = useEthereum();
-    const {songs} = useFetchSongs();
+    const {songs, loading} = useFetchSongs();
     const {artists} = useFetchArtists();
     const [currentSong, setCurrentSong] = useState<Song | null>(null);
     const [greeting, setGreeting] = useState(getGreeting());
+    const [message, setMessage] = useState("");
 
     function getGreeting(): string {
       const hour = new Date().getHours();
       if (hour >= 5 && hour < 12) {
-        return "Good morning";
+        return "Good morning 🌻";
       } else if (hour >= 12 && hour < 18) {
-        return "Good afternoon";
+        return "Good afternoon 🌞";
       } else if (hour >= 18 && hour < 22) {
-        return "Good evening";
+        return "Good evening 🌖";
       } else {
-        return "Good night";
+        return "Good night 🌜";
       }
     }
 
@@ -94,8 +96,8 @@ export function MainContent() {
         tx.wait(2);
     }
     const playSong = async (song: Song) => {
+        setMessage("Putting the record on...");
         const signer = await getSigner();
-        const provider = await getProvider();
         const SongNFTContract = new Contract(song.contractAddress, SongNFTABI.abi, signer);
         const contract = new Contract(zkTunecontractconfig.address, zkTunecontractconfig.abi, signer);
         if (await SongNFTContract.balanceOf(account.address?.toString()) > 0){
@@ -111,8 +113,10 @@ export function MainContent() {
                 streamCount: 0,
                 contractAddress: ""
             }
+            setMessage("");
             setCurrentSong(currentSong);
         } else {
+            setMessage("Minting Song")
             console.log("Minting Song");
             await mintNFT(song);
             
@@ -122,7 +126,7 @@ export function MainContent() {
                     console.error("NFT minting timeout. Please check your transaction.");
                     return;
                 }
-    
+                setMessage("Putting the record on...")
                 if (await SongNFTContract.balanceOf(account.address?.toString()) > 0) {
                     console.log("NFT Minted successfully");
                     const songData = await SongNFTContract.getInfo(account.address?.toString());
@@ -136,6 +140,7 @@ export function MainContent() {
                         streamCount: 0,
                         contractAddress: ""
                     }
+                    setMessage("");
                     setCurrentSong(currentSong);
                 } else {
                     console.log(`Waiting for NFT to be minted. Attempts left: ${attempts}`);
@@ -150,7 +155,6 @@ export function MainContent() {
 
     useEffect(() => {
       console.log("Fetching songs...");
-      console.log(songs);
       const fetchSongs = async () => {
         try {
           const formattedSongs = songs.map((song: any, index: number) => ({
@@ -172,7 +176,6 @@ export function MainContent() {
           // Take the top 5 songs
           const PopularSongs = sortedSongs.slice(0, 5);
     
-          console.log("Popular 5 songs:", PopularSongs);
           setPopularSongs(PopularSongs);
           console.log("Fetched songs completed successfully"); 
         } catch (error) {
@@ -187,7 +190,6 @@ export function MainContent() {
       console.log("Fetching artists...");
       const fetchArtists = async () => {
         try {
-          console.log(artists);
           const formattedArtists = artists.map((artist: any, index: number) => ({
             id: (index + 1).toString(),
             name: artist.name,
@@ -198,7 +200,6 @@ export function MainContent() {
           // Take the top 5 artists
           const popularArtists = formattedArtists.slice(0, 5);
     
-          console.log("Popular 5 artists:", popularArtists);
           setPopularArtists(popularArtists);
           console.log("Fetched artists completed successfully"); 
         } catch (error) {
@@ -215,17 +216,17 @@ export function MainContent() {
           <Heading size="2xl">{greeting}</Heading>
           <Flex alignItems="center">
             <Connect />
-            {/* <Link href="/profile" passHref>
+            <Link href="/profile" passHref>
               <IconButton
-                as="a"
+                isRound={true}
+                size='lg'
                 aria-label="Profile"
-                icon={<FaUser />}
-                colorScheme="green"
-                variant="ghost"
+                icon={<CgProfile />}
+                variant="outline"
                 ml={4}
-                color="white"
+                colorScheme="white"
               />
-            </Link> */}
+            </Link>
           </Flex>
         </Flex>
         {account.isConnected ? (
@@ -236,10 +237,12 @@ export function MainContent() {
                 {popularSongs.map((song) => (
                   <Box key={song.id.toString()} bg="gray.800" borderRadius="lg" overflow="hidden" transition="all 0.3s" _hover={{ bg: "gray.700", transform: "scale(1.05)" }} onClick={() => playSong(song)} cursor="pointer">
                     <Box position="relative">
+                    <Skeleton isLoaded={!loading}>
                       <Img src={song.cover} alt={song.title} />
                       <Box position="absolute" top="0" left="0" right="0" bottom="0" bg="blackAlpha.600" opacity="0" transition="all 0.3s" _groupHover={{ opacity: 1 }}>
                         <Icon as={FaPlay} position="absolute" top="50%" left="50%" transform="translate(-50%, -50%)" boxSize={12} color="green.500" />
                       </Box>
+                      </Skeleton>
                     </Box>
                     <Box p={4}>
                       <Text fontWeight="semibold" isTruncated>{song.title}</Text>
@@ -259,10 +262,12 @@ export function MainContent() {
                       position="relative" 
                       borderRadius="full" 
                       overflow="hidden"
-                      w="120px"  
-                      h="120px"
+                      w="150px"  
+                      h="150px"
                       boxShadow="md"
+                      mb={2}
                     >
+                    <Skeleton isLoaded={!loading}>
                       <Image 
                         src={artist.profileURI} 
                         alt={artist.name} 
@@ -287,22 +292,23 @@ export function MainContent() {
                         justifyContent="center"
                       >
                       </Box>
+                      </Skeleton>
                     </Box>
                     <Text fontWeight="semibold" fontSize="sm">{artist.name}</Text>
                   </VStack>
                 ))}
               </SimpleGrid>
             </Box>
-            {currentSong && (
+           
               <Box position="fixed" bottom={0} left={0} right={0}>
                 <Player 
-                  audioUrl={currentSong.audioUrl} 
-                  title={currentSong.title} 
-                  artist={currentSong.artist} 
-                  cover={currentSong.cover}
+                  audioUrl={currentSong?.audioUrl || ""} 
+                  title={message ? message : currentSong?.title || ""} 
+                  artist={currentSong?.artist || ""} 
+                  cover={currentSong?.cover ||"https://via.placeholder.com/300"}
                 />
               </Box>
-            )}
+         
           </>
         ) : (
           <Heading>Please connect your wallet</Heading>

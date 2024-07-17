@@ -1,5 +1,7 @@
 import { Box, VStack, Text, Button, Icon } from "@chakra-ui/react"
 import { FaHome, FaSearch, FaBook, FaPlusSquare, FaHeart } from "react-icons/fa"
+import { CgProfile } from "react-icons/cg";
+import Link from 'next/link';
 
 export function Sidebar() {
   return (
@@ -12,6 +14,11 @@ export function Sidebar() {
           <Button leftIcon={<Icon as={FaHome} />} variant="ghost" justifyContent="flex-start" color="white">
             Home
           </Button>
+          <Link href="/profile" passHref>
+          <Button leftIcon={<Icon as={CgProfile} />} variant="ghost" justifyContent="flex-start" color="white">
+            Profile
+          </Button>
+          </Link>
           {/* <Button leftIcon={<Icon as={FaSearch} />} variant="ghost" justifyContent="flex-start">
             Search
           </Button>
