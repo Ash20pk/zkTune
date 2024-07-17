@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Box, Flex, Heading, Text, HStack, SimpleGrid, Image, Button, Skeleton, Icon, Tabs, TabList, TabPanels, Tab, TabPanel } from "@chakra-ui/react";
+import { Box, Flex, Heading, Text, HStack, SimpleGrid, Image, Button, Skeleton, Icon, Tabs, TabList, TabPanels, Tab, TabPanel, Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton, useDisclosure, Input, VStack, FormControl, FormLabel, InputGroup } from "@chakra-ui/react";
 import { useProfileData } from './fetchProfile';
 import { useRouter } from 'next/navigation';
-import { FaPlay, FaArrowLeft, FaUser, FaHeadphones } from 'react-icons/fa';
+import { FaPlay, FaArrowLeft, FaUser, FaHeadphones, FaPlus } from 'react-icons/fa';
+import { useIPFS } from './uploadIPFS'; 
 
 // Define the Song type
 interface Song {
@@ -19,9 +20,10 @@ interface Song {
 interface SongGridProps {
   songs: Song[];
   title: string;
+  onAddSong?: () => void; 
 }
 
-const SongGrid: React.FC<SongGridProps> = ({ songs, title }) => (
+const SongGrid: React.FC<SongGridProps> = ({ songs, title, onAddSong }) => (
   <Box>
     <Heading size="lg" mb={6}>{title}</Heading>
     <SimpleGrid columns={[2, 3, 4, 5]} spacing={6}>
@@ -52,6 +54,22 @@ const SongGrid: React.FC<SongGridProps> = ({ songs, title }) => (
           </Box>
         </Box>
       ))}
+      {onAddSong && (
+        <Box 
+          bg="gray.800" 
+          borderRadius="lg" 
+          overflow="hidden" 
+          transition="all 0.3s" 
+          _hover={{ transform: "scale(1.05)", cursor: "pointer" }}
+          onClick={onAddSong}
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+          height="100%"
+        >
+          <Icon as={FaPlus} color="white" boxSize={12} />
+        </Box>
+      )}
     </SimpleGrid>
   </Box>
 );
@@ -60,10 +78,48 @@ export function Profile() {
   const router = useRouter();
   const { isLoading, isArtist, artistInfo, artistSongs, streamedNFTs, totalStreams, error } = useProfileData();
   const [isMounted, setIsMounted] = useState(false)
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [newSong, setNewSong] = useState({ title: '', audioFile: null, coverFile: null });
+  const { uploadToIPFS, isUploading, error: uploadError } = useIPFS();
+
+
 
   useEffect(() => {
     setIsMounted(true)
   }, [])
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>, type: 'audio' | 'cover') => {
+    if (event.target.files && event.target.files[0]) {
+      setNewSong({ ...newSong, [`${type}File`]: event.target.files[0] });
+    }
+  };
+
+  const handleAddSong = async () => {
+    if (!newSong.title || !newSong.audioFile || !newSong.coverFile) {
+      alert('Please fill in all fields and upload both audio and cover image.');
+      return;
+    }
+
+    try {
+      const audioUrl = await uploadToIPFS(newSong.audioFile);
+      const coverUrl = await uploadToIPFS(newSong.coverFile);
+
+      // Here, you would typically call a function to add the song to your contract
+      console.log('Adding new song:', {
+        title: newSong.title,
+        audioUrl,
+        coverUrl
+      });
+
+      // After adding, you might want to refresh the list of songs
+      onClose();
+      setNewSong({ title: '', audioFile: null, coverFile: null });
+    } catch (error) {
+      console.error('Error adding song:', error);
+      alert('An error occurred while adding the song. Please try again.');
+    } finally {
+    }
+  };
 
   const handleBackClick = () => {
     if (isMounted) {
@@ -140,7 +196,7 @@ export function Profile() {
             {isArtist && (
               <TabPanel>
                 <Skeleton isLoaded={!isLoading}>
-                <SongGrid songs={artistSongs} title="Your Songs" />
+                <SongGrid songs={artistSongs} title="Your Songs" onAddSong={onOpen} />
                 </Skeleton>
               </TabPanel>
             )}
@@ -148,6 +204,48 @@ export function Profile() {
         </Tabs>
         </Skeleton>
       </Box>
+      <Modal isOpen={isOpen} onClose={onClose}>
+    <ModalOverlay />
+    <ModalContent bg="gray.800" color="white">
+      <ModalHeader>Add New Song</ModalHeader>
+      <ModalCloseButton />
+      <ModalBody>
+        <VStack spacing={4}>
+          <FormControl>
+            <FormLabel>Song Title</FormLabel>
+            <Input 
+              placeholder="Song Title" 
+              value={newSong.title}
+              onChange={(e) => setNewSong({...newSong, title: e.target.value})}
+            />
+          </FormControl>
+          <FormControl>
+            <FormLabel>Audio File</FormLabel>
+           
+            <Input 
+              type="file" 
+              accept="audio/*"
+              onChange={(e) => handleFileChange(e, 'audio')}
+            />
+          </FormControl>
+          <FormControl>
+            <FormLabel>Cover Image</FormLabel>
+            <Input 
+              type="file" 
+              accept="image/*"
+              onChange={(e) => handleFileChange(e, 'cover')}
+            />
+          </FormControl>
+        </VStack>
+      </ModalBody>
+
+      <ModalFooter justifyContent="center">
+        <Button colorScheme="blue" mr={3} onClick={handleAddSong} isLoading={isUploading} variant="outline">
+          Add Song
+        </Button>
+      </ModalFooter>
+    </ModalContent>
+  </Modal>
     </Box>
   );
 }
