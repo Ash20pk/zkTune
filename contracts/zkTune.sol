@@ -31,10 +31,12 @@ contract zkTune is Ownable {
     mapping(uint256 => mapping(address => bool)) public userHasNFT;
     mapping(address => uint256[]) public artistSongs;
     mapping(address => uint256[]) public userStreams;
+    mapping(uint256 => Artist) public artistID;
 
     address[] public artistAddresses;
     uint256[] public songIds;
     uint256 private _currentSongId;
+    uint256 private _currentArtistId;
     uint256 public totalSongs;
     uint256 public totalUsers;
     uint256 public totalArtists;
@@ -47,6 +49,7 @@ contract zkTune is Ownable {
 
     constructor() {
         _currentSongId = 0;
+        _currentArtistId = 0;
         totalSongs = 0;
         totalUsers = 0;
         totalArtists = 0;
@@ -64,9 +67,15 @@ contract zkTune is Ownable {
 
     function registerArtist(string memory _name, string memory _profileURI) external {
         require(bytes(artists[msg.sender].name).length == 0, "Artist already registered");
+        _currentArtistId++;
+        uint256 newArtistId = _currentArtistId;
+
         artists[msg.sender] = Artist(_name, _profileURI);
+        artistID[newArtistId] = Artist(_name, _profileURI);
+
         artistAddresses.push(msg.sender);
         totalArtists++;
+
         emit ArtistRegistered(msg.sender, _name);
     }
 

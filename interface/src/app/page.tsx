@@ -9,7 +9,7 @@ export default function Page() {
   return (
     <ChakraProvider>
     <div className="flex flex-col h-screen bg-black text-white">
-      <Flex h="100vh" flexDirection="column">
+      <Flex h="110vh" flexDirection="column">
         <Flex flex="1" overflow="hidden">
           <Sidebar />
             <MainContent />

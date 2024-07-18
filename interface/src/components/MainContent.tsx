@@ -12,6 +12,7 @@ import { zkTunecontractconfig, paymasterParams } from './contract';
 import { ethers } from "ethers";
 import SongNFTABI from "../ABI/SongNFT.json";
 import { useFetchArtists } from './fetchArtists';
+import { useRouter } from 'next/navigation';
 
 
 interface Song {
@@ -40,6 +41,7 @@ export function MainContent() {
     const [currentSong, setCurrentSong] = useState<Song | null>(null);
     const [greeting, setGreeting] = useState(getGreeting());
     const [message, setMessage] = useState("");
+    const router = useRouter();
 
     function getGreeting(): string {
       const hour = new Date().getHours();
@@ -61,6 +63,11 @@ export function MainContent() {
   
       return () => clearInterval(timer);
     }, []);
+
+    const navigateToArtist = (artistId: string) => {
+      router.push(`/artist/${artistId}`);
+    };
+  
 
     const mintNFT = async (song: Song) => {
         const provider = await getProvider();
@@ -257,7 +264,13 @@ export function MainContent() {
               <Heading size="lg" mb={4}>Popular artists</Heading>
               <SimpleGrid columns={5} spacing={6}> 
                 {popularArtists.map((artist) => (
-                  <VStack key={artist.id} align="center" spacing={2}> 
+                  <VStack 
+                    key={artist.id} 
+                    align="center" 
+                    spacing={2}
+                    onClick={() => navigateToArtist(artist.id)}
+                    cursor="pointer"
+                    _hover={{ opacity: 0.8 }}>         
                     <Box 
                       position="relative" 
                       borderRadius="full" 

@@ -2,8 +2,10 @@ import { Box, VStack, Text, Button, Icon } from "@chakra-ui/react"
 import { FaHome, FaSearch, FaBook, FaPlusSquare, FaHeart } from "react-icons/fa"
 import { CgProfile } from "react-icons/cg";
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export function Sidebar() {
+  const router = useRouter();
   return (
     <Box w="240px" bg="black" color="gray.300" p={4}>
       <VStack align="stretch" spacing={6}>
@@ -11,7 +13,7 @@ export function Sidebar() {
           ZkTune
         </Text>
         <VStack align="stretch" spacing={4}>
-          <Button leftIcon={<Icon as={FaHome} />} variant="ghost" justifyContent="flex-start" color="white">
+          <Button leftIcon={<Icon as={FaHome} />} variant="ghost" justifyContent="flex-start" color="white" onClick={() => router.push('/')}>
             Home
           </Button>
           <Link href="/profile" passHref>
