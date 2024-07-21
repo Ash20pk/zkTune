@@ -137,7 +137,7 @@ export function MainContent() {
                 icon={<CgProfile />}
                 variant="outline"
                 ml={4}
-                colorScheme="white"
+                colorScheme="green"
               />
             </Link>
           </Flex>
