@@ -2,12 +2,13 @@
 
 import React, { useEffect, useState } from 'react';
 import { Box, Flex, Heading, Text, VStack, HStack, Image, Skeleton} from "@chakra-ui/react";
-import { useRouter } from 'next/navigation';
 import { Contract } from 'zksync-ethers';
 import { zkTunecontractconfig } from './contract';
 import { useEthereum } from './Context';
 import { usePlaySong } from './usePlaySong';
 import { Player } from './Player';
+import { TipArtist } from './TipArtist';
+
 
 
 interface Song {
@@ -32,7 +33,6 @@ interface ArtistPageProps {
 }
 
 export function ArtistPage({ artistId }: ArtistPageProps) {
-  const router = useRouter();
   const [artist, setArtist] = useState<Artist>();
   const [isLoading, setIsLoading] = useState(true);
   const [artistSongs, setArtistSongs] = useState<Song[]>([]);
@@ -98,6 +98,9 @@ export function ArtistPage({ artistId }: ArtistPageProps) {
           <Skeleton isLoaded={!isLoading}>
             <Heading size="3xl">{artist?.name}</Heading>
             </Skeleton>
+            <Skeleton isLoaded={!isLoading}>
+                <TipArtist artistName={artist?.name || ''} artistAddress={artistAddress} />
+              </Skeleton>
           </VStack>
         </Flex>
 
