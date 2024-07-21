@@ -35,6 +35,9 @@ export function useProfileData() {
     const [error, setError] = useState<string | null>(null);
   
     useEffect(() => {
+        fetchProfileData();
+    }, [account.address, getSigner]);
+
         const fetchProfileData = async () => {
             try {
               const signer = await getSigner();
@@ -94,9 +97,6 @@ export function useProfileData() {
               setIsLoading(false);
             }
           };
-      
-          fetchProfileData();
-      }, [account.address, getSigner]);
-  
-    return { isLoading, isArtist, artistInfo, artistSongs, streamedNFTs, totalStreams, error, userInfo };
+        
+    return { isLoading, isArtist, artistInfo, artistSongs, streamedNFTs, totalStreams, error, userInfo, fetchProfileData };
   }

@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { Box, Flex, Heading, Text, HStack, SimpleGrid, Image, Button, Skeleton, Icon, Tabs, TabList, TabPanels, Tab, TabPanel, Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton, useDisclosure, Input, VStack, FormControl, FormLabel, InputGroup } from "@chakra-ui/react";
+import React, { useEffect, useState, useRef } from 'react';
+import { Box, Flex, Heading, Text, HStack, SimpleGrid, Image, Button, Skeleton, Icon, Tabs, TabList, TabPanels, Tab, TabPanel, Progress, Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton, useDisclosure, Input, VStack, FormControl, FormLabel, InputGroup, NumberInput, Checkbox, NumberInputField, NumberInputStepper, NumberIncrementStepper, NumberDecrementStepper } from "@chakra-ui/react";
 import { useProfileData } from './fetchProfile';
-import { useRouter } from 'next/navigation';
-import { FaPlay, FaUser, FaHeadphones, FaPlus } from 'react-icons/fa';
+import { FaPlay, FaUser, FaHeadphones, FaPlus, FaMusic, FaImage, FaUpload } from 'react-icons/fa';
 import { useIPFS } from './uploadIPFS'; 
+import { useAddSong } from './AddSong';
 
 // Define the Song type
 interface Song {
@@ -14,6 +14,14 @@ interface Song {
   artist?: string;
   cover: string;
   streamCount?: number;
+}
+
+interface NewSong {
+  title: string;
+  audioFile: File | null;
+  coverFile: File | null;
+  isFree: boolean;
+  nftPrice: string;
 }
 
 // Define props for SongGrid component
@@ -75,11 +83,22 @@ const SongGrid: React.FC<SongGridProps> = ({ songs, title, onAddSong }) => (
 );
 
 export function Profile() {
-  const { isLoading, isArtist, artistInfo, artistSongs, streamedNFTs, totalStreams, error, userInfo } = useProfileData();
+  const {isLoading, isArtist, artistInfo, artistSongs, streamedNFTs, totalStreams, error, userInfo, fetchProfileData } = useProfileData();
   const [isMounted, setIsMounted] = useState(false)
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const [newSong, setNewSong] = useState({ title: '', audioFile: null, coverFile: null });
-  const { uploadToIPFS, isUploading, error: uploadError } = useIPFS();
+  const [newSong, setNewSong] = useState<NewSong>({ title: '', audioFile: null, coverFile: null, isFree: true, nftPrice: '0'  });
+  const {uploadToIPFS, isUploading, error: uploadError } = useIPFS();
+  const { addSong, isAdding } = useAddSong({
+    onSongAdded: () => {
+      fetchProfileData();
+      onClose();
+      setNewSong({ title: '', audioFile: null, coverFile: null, isFree: true, nftPrice: '0' });
+    },
+    onError: (error) => alert(error)
+  });
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const audioInputRef = useRef<HTMLInputElement>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
 
 
 
@@ -100,23 +119,28 @@ export function Profile() {
     }
 
     try {
+      for (let i = 0; i <= 100; i += 10) {
+        setUploadProgress(i);
+        await new Promise(resolve => setTimeout(resolve, 200));
+      }
+
+      setUploadProgress(0);
       const audioUrl = await uploadToIPFS(newSong.audioFile);
+      setUploadProgress(50);
       const coverUrl = await uploadToIPFS(newSong.coverFile);
+      setUploadProgress(100);
 
-      // Here, you would typically call a function to add the song to your contract
-      console.log('Adding new song:', {
-        title: newSong.title,
+      await addSong(
+        newSong.title,
         audioUrl,
-        coverUrl
-      });
-
-      // After adding, you might want to refresh the list of songs
-      onClose();
-      setNewSong({ title: '', audioFile: null, coverFile: null });
+        coverUrl,
+        newSong.isFree ? '0' : newSong.nftPrice
+      );
     } catch (error) {
       console.error('Error adding song:', error);
       alert('An error occurred while adding the song. Please try again.');
     } finally {
+      setUploadProgress(0);
     }
   };
 
@@ -192,48 +216,144 @@ export function Profile() {
         </Tabs>
         </Skeleton>
       </Box>
-      <Modal isOpen={isOpen} onClose={onClose}>
-    <ModalOverlay />
-    <ModalContent bg="gray.800" color="white">
-      <ModalHeader>Add New Song</ModalHeader>
-      <ModalCloseButton />
-      <ModalBody>
-        <VStack spacing={4}>
-          <FormControl>
-            <FormLabel>Song Title</FormLabel>
-            <Input 
-              placeholder="Song Title" 
-              value={newSong.title}
-              onChange={(e) => setNewSong({...newSong, title: e.target.value})}
-            />
-          </FormControl>
-          <FormControl>
-            <FormLabel>Audio File</FormLabel>
-           
-            <Input 
-              type="file" 
-              accept="audio/*"
-              onChange={(e) => handleFileChange(e, 'audio')}
-            />
-          </FormControl>
-          <FormControl>
-            <FormLabel>Cover Image</FormLabel>
-            <Input 
-              type="file" 
-              accept="image/*"
-              onChange={(e) => handleFileChange(e, 'cover')}
-            />
-          </FormControl>
-        </VStack>
-      </ModalBody>
+      <Modal isOpen={isOpen} onClose={onClose} size="xl">
+      <ModalOverlay />
+      <ModalContent bg="gray.800" color="white" justifyContent="center">
+        <ModalHeader>Add New Song</ModalHeader>
+        <ModalCloseButton />
+        <ModalBody>
+          <VStack spacing={6}>
+            <FormControl>
+              <FormLabel>Song Title</FormLabel>
+              <Input 
+                placeholder="Enter song title" 
+                value={newSong.title}
+                onChange={(e) => setNewSong({...newSong, title: e.target.value})}
+              />
+            </FormControl>
 
-      <ModalFooter justifyContent="center">
-        <Button colorScheme="blue" mr={3} onClick={handleAddSong} isLoading={isUploading} variant="outline">
-          Add Song
-        </Button>
-      </ModalFooter>
-    </ModalContent>
-  </Modal>
+            <HStack width="100%" spacing={4}>
+              <Box flex={1}>
+                <FormControl>
+                  <FormLabel>Audio File</FormLabel>
+                  <Box 
+                    border="2px dashed" 
+                    borderColor="gray.500" 
+                    borderRadius="md" 
+                    p={4} 
+                    textAlign="center"
+                    cursor="pointer"
+                    alignContent="center"
+                    height="200px"
+                    width="150px"
+                    onClick={() => audioInputRef.current?.click()}
+                  >
+                    {newSong.audioFile ? (
+                      <Text>{newSong.audioFile.name}</Text>
+                    ) : (
+                      <VStack>
+                        <Icon as={FaMusic} boxSize={8} />
+                        <Text>Click to upload audio</Text>
+                      </VStack>
+                    )}
+                  </Box>
+                  <Input 
+                    type="file" 
+                    accept="audio/*"
+                    onChange={(e) => handleFileChange(e, 'audio')}
+                    ref={audioInputRef}
+                    display="none"
+                  />
+                </FormControl>
+              </Box>
+
+              <Box flex={1}>
+                <FormControl>
+                  <FormLabel>Cover Image</FormLabel>
+                  <Box 
+                    border="2px dashed" 
+                    borderColor="gray.500" 
+                    borderRadius="md" 
+                    p={4} 
+                    textAlign="center"
+                    cursor="pointer"
+                    onClick={() => coverInputRef.current?.click()}
+                    alignContent="center"
+                    height="200px" 
+                    width="350px"                   
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="center"
+                  >
+                    {newSong.coverFile ? (
+                      <Image 
+                        src={URL.createObjectURL(newSong.coverFile)} 
+                        alt="Cover preview" 
+                        maxHeight="100%" 
+                        maxWidth="100%" 
+                        objectFit="contain"
+                      />
+                    ) : (
+                      <VStack>
+                        <Icon as={FaImage} boxSize={8} />
+                        <Text>Click to upload cover</Text>
+                      </VStack>
+                    )}
+                  </Box>
+                  <Input 
+                    type="file" 
+                    accept="image/*"
+                    onChange={(e) => handleFileChange(e, 'cover')}
+                    ref={coverInputRef}
+                    display="none"
+                  />
+                </FormControl>
+              </Box>
+            </HStack>
+
+            <FormControl>
+              <Checkbox 
+                isChecked={newSong.isFree}
+                onChange={(e) => setNewSong({...newSong, isFree: e.target.checked, nftPrice: e.target.checked ? '0' : newSong.nftPrice})}
+              >
+                Free Song
+              </Checkbox>
+            </FormControl>
+
+            {!newSong.isFree && (
+              <FormControl>
+                <FormLabel>NFT Price (ETH)</FormLabel>
+                <NumberInput 
+                  value={newSong.nftPrice} 
+                  onChange={(valueString) => setNewSong({...newSong, nftPrice: valueString})}
+                  min={0} 
+                  step={0.01}
+                >
+                  <NumberInputField />
+                  <NumberInputStepper>
+                    <NumberIncrementStepper color="white"/>
+                    <NumberDecrementStepper color="white" />
+                  </NumberInputStepper>
+                </NumberInput>
+              </FormControl>
+            )}
+
+            {isUploading && (
+              <Box width="100%">
+                <Text mb={2}>Uploading: {uploadProgress}%</Text>
+                <Progress value={uploadProgress} size="sm" colorScheme="green" />
+              </Box>
+            )}
+          </VStack>
+        </ModalBody>
+
+        <ModalFooter justifyContent="center">
+          <Button variant="outline" colorScheme="green" mr={3} onClick={handleAddSong} isLoading={isAdding} leftIcon={<FaUpload />}>
+            Add Song
+          </Button>
+        </ModalFooter>
+      </ModalContent>
+    </Modal>
     </Box>
   );
 }
