@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useEthereum } from './Context';
 import { useIPFS } from './uploadIPFS'; 
 import { 
@@ -35,21 +35,32 @@ export function Connect() {
     setIsConnecting(true);
     console.log('Connect');
     await connect();
-    const signer = await getSigner();
-    const contract = new Contract(zkTunecontractconfig.address, zkTunecontractconfig.abi, signer);
-    const user = await contract.users(signer?.address);
-    const artist = await contract.artists(signer?.address);
-    if (artist[0] == '' && user[0] == '') {
-      onOpen();
-    }else if (artist[0] !== '') {
-      console.log('Connected as artist');
-    }else {
-      console.log('Connected as listener');
-    }
-
     setIsConnecting(false);
 
   };
+
+  useEffect(()  =>{
+    const checkUser = async() => {
+      try {
+        console.log('Checking user');
+        const signer = await getSigner();
+        const contract = new Contract(zkTunecontractconfig.address, zkTunecontractconfig.abi, signer);
+        const user = await contract.users(signer?.address);
+        const artist = await contract.artists(signer?.address);
+        if (artist[0] == '' && user[0] == '') {
+          onOpen();
+        }else if (artist[0] !== '') {
+          console.log('Connected as artist');
+        }else {
+          console.log('Connected as listener');
+        } 
+    } catch(e) {
+        await disconnect();
+    }
+  }
+    checkUser();
+
+  }, [isConnecting])
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {

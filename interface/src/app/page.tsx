@@ -1,6 +1,6 @@
 'use client'
 
-import { ChakraProvider, Flex } from "@chakra-ui/react"
+import { ChakraProvider, Flex, Box } from "@chakra-ui/react"
 import { Sidebar } from '../components/Sidebar'
 import { MainContent } from '../components/MainContent'
 

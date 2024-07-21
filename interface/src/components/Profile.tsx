@@ -137,14 +137,8 @@ export function Profile() {
     <Box flex="1" bg="gray.900" color="white" overflowY="auto" minH="100vh">
       <Box 
         bg="gray.900"
-        pt={20}
-        pb={10}
-        px={8}
       >
         <Skeleton isLoaded={!isLoading}>
-        <Button onClick={handleBackClick} mb={4} leftIcon={<Icon as={FaArrowLeft} />} colorScheme="whiteAlpha">
-          Back to Home
-        </Button>
         </Skeleton>
         <Flex alignItems="center" mt={8}>
           <Box 

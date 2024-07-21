@@ -18,7 +18,7 @@ export default function ProfilePage() {
       <Flex h="100vh" flexDirection="column">
         <Flex flex="1" overflow="hidden">
           <Sidebar />
-          <ProfileComponent />          
+          <ProfileComponent />        
           </Flex>
       </Flex>
     </div>

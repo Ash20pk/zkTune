@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { Contract } from 'zksync-ethers';
 import { useEthereum } from './Context';
 import { zkTunecontractconfig } from './contract';
-import SongNFTABI from "../ABI/SongNFT.json";
 
 interface Artist {
     name: string;
