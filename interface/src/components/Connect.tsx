@@ -30,6 +30,7 @@ export function Connect() {
   const { account, connect, disconnect, getSigner, getProvider } = useEthereum();
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [isConnecting, setIsConnecting] = useState(false);
+  const [isloading, setIsLoading] = useState(false);
   const [name, setName] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const { uploadToIPFS, isUploading, error: uploadError } = useIPFS();
@@ -66,14 +67,36 @@ export function Connect() {
 
   }, [isConnecting])
 
+  const checkRegistration = async() => {
+    try {
+      console.log('Checking Registration');
+      const signer = await getSigner();
+      const contract = new Contract(zkTunecontractconfig.address, zkTunecontractconfig.abi, signer);
+      const user = await contract.users(signer?.address);
+      const artist = await contract.artists(signer?.address);
+      if (artist[0] == '' && user[0] == '') {
+        onOpen();
+      }else if (artist[0] !== '') {
+        console.log('Connected as artist');
+      }else {
+        console.log('Connected as listener');
+      } 
+  } catch(e) {
+      await disconnect();
+  }
+    finally{
+      onClose();
+    }
+}
+
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
       setFile(event.target.files[0]);
     }
   };
 
-
   const handleRegistration = async (isArtist: boolean) => {
+    setIsLoading(true);
     let profileURI = '';
     if (file) {
       try {
@@ -117,6 +140,8 @@ export function Connect() {
         tx.wait(2);
 
         console.log("Registered as artist");
+        checkRegistration();
+        
       } else {
         const gasPrice = await provider?.getGasPrice();
 
@@ -145,10 +170,12 @@ export function Connect() {
         const tx = await contract.registerUser(name, '' || profileURI, txOverrides)
         tx.wait(2);
         console.log("Registered as regular user");
+        checkRegistration();
       }
     } catch (error) {
       console.error("Error registering:", error);
     }
+    setIsLoading(false);
     onClose();
   };
 
@@ -258,7 +285,7 @@ export function Connect() {
               variant="ghost" 
               mr={3} 
               onClick={() => handleRegistration(true)}
-              isLoading={isUploading}
+              isLoading={isloading}
               textColor="white"
               _hover={{
                 borderColor: "blue",
@@ -271,7 +298,7 @@ export function Connect() {
             <Button 
               variant="ghost" 
               onClick={() => handleRegistration(false)}
-              isLoading={isUploading}
+              isLoading={isloading}
               textColor="white"
               _hover={{
                 borderColor: "blue",

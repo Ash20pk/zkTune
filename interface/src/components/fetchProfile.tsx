@@ -8,6 +8,11 @@ interface Artist {
     profileURI: string;
   }
 
+interface User {
+    name: string;
+    profileURI: string;
+  }
+
 interface Song {
     id: string;
     title: string;
@@ -23,6 +28,7 @@ export function useProfileData() {
     const { account, getSigner } = useEthereum();
     const [isArtist, setIsArtist] = useState(false);
     const [artistInfo, setArtistInfo] = useState<Artist | null>(null);
+    const [userInfo, setUserInfo] = useState<Artist | null>(null);
     const [artistSongs, setArtistSongs] = useState<Song[]>([]);
     const [streamedNFTs, setStreamedNFTs] = useState<Song[]>([]);
     const [totalStreams, setTotalStreams] = useState(0);
@@ -61,6 +67,10 @@ export function useProfileData() {
                 }));
                 setArtistSongs(songs);
                 setTotalStreams(totalStreams);
+            } else {
+                setIsArtist(false);
+                const userData = await contract.users(account.address);
+                setUserInfo({ name: userData[0], profileURI: userData[1] });
             }
 
                 // Fetch streamed NFTs 
@@ -88,5 +98,5 @@ export function useProfileData() {
           fetchProfileData();
       }, [account.address, getSigner]);
   
-    return { isLoading, isArtist, artistInfo, artistSongs, streamedNFTs, totalStreams, error };
+    return { isLoading, isArtist, artistInfo, artistSongs, streamedNFTs, totalStreams, error, userInfo };
   }

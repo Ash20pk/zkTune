@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { Box, Flex, Heading, Text, HStack, SimpleGrid, Image, Button, Skeleton, Icon, Tabs, TabList, TabPanels, Tab, TabPanel, Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton, useDisclosure, Input, VStack, FormControl, FormLabel, InputGroup } from "@chakra-ui/react";
 import { useProfileData } from './fetchProfile';
 import { useRouter } from 'next/navigation';
-import { FaPlay, FaArrowLeft, FaUser, FaHeadphones, FaPlus } from 'react-icons/fa';
+import { FaPlay, FaUser, FaHeadphones, FaPlus } from 'react-icons/fa';
 import { useIPFS } from './uploadIPFS'; 
 
 // Define the Song type
@@ -75,8 +75,7 @@ const SongGrid: React.FC<SongGridProps> = ({ songs, title, onAddSong }) => (
 );
 
 export function Profile() {
-  const router = useRouter();
-  const { isLoading, isArtist, artistInfo, artistSongs, streamedNFTs, totalStreams, error } = useProfileData();
+  const { isLoading, isArtist, artistInfo, artistSongs, streamedNFTs, totalStreams, error, userInfo } = useProfileData();
   const [isMounted, setIsMounted] = useState(false)
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [newSong, setNewSong] = useState({ title: '', audioFile: null, coverFile: null });
@@ -121,12 +120,6 @@ export function Profile() {
     }
   };
 
-  const handleBackClick = () => {
-    if (isMounted) {
-      router.push('/')
-    }
-  }
-
   if (!isMounted) {
     return null 
   }
@@ -137,6 +130,7 @@ export function Profile() {
     <Box flex="1" bg="gray.900" color="white" overflowY="auto" minH="100vh">
       <Box 
         bg="gray.900"
+        p={10}
       >
         <Skeleton isLoaded={!isLoading}>
         </Skeleton>
@@ -152,8 +146,8 @@ export function Profile() {
           >
           <Skeleton isLoaded={!isLoading}>
             <Image 
-              src={isArtist ? artistInfo?.profileURI : "https://via.placeholder.com/200"}
-              alt={isArtist ? artistInfo?.name : "User"}
+              src={isArtist ? artistInfo?.profileURI : userInfo?.profileURI}
+              alt={isArtist ? artistInfo?.name : userInfo?.name}
               objectFit="cover"
               w="100%"
               h="100%"
@@ -161,10 +155,10 @@ export function Profile() {
             </Skeleton>
           </Box>
           <Skeleton isLoaded={!isLoading}>
-            <Heading size="4xl" mb={2}>{isArtist ? artistInfo?.name : "Music Lover"}</Heading>
+            <Heading size="4xl" mb={2}>{isArtist ? artistInfo?.name : userInfo?.name }</Heading>
             <HStack>
             <Box>
-            <Text fontSize='s'>{isArtist ? `${artistSongs.length} songs •` : `${streamedNFTs.length} streamed NFTs •`}</Text>
+            <Text fontSize='s'>{isArtist && `${artistSongs.length} songs ` }</Text>
             </Box>
             <Box>
             <Text fontSize='s'>{isArtist && `${totalStreams} listeners`}</Text>
