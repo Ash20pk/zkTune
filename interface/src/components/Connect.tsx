@@ -17,10 +17,14 @@ import {
   VStack, 
   Text,
   Image,
-  Box
+  Box,
+  Icon,
+  IconButton
 } from "@chakra-ui/react"
 import { Contract, utils } from 'zksync-ethers';
 import { zkTunecontractconfig, paymasterParams } from './contract';
+import { IoMdCloudUpload, IoMdTrash } from "react-icons/io";
+
 
 export function Connect() {
   const { account, connect, disconnect, getSigner, getProvider } = useEthereum();
@@ -168,55 +172,112 @@ export function Connect() {
       )}
 
       <Modal isOpen={isOpen} onClose={onClose}>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Complete Your Profile</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody>
+        <ModalOverlay  backgroundColor="rgba(0, 0, 0, 0.6)" />
+        <ModalContent bg="gray.900">
+          <ModalHeader color="white" textAlign="center">Complete Your Profile</ModalHeader>
+          <ModalCloseButton color="white" _hover={{color: "red"}} border="solid" borderRadius="full" onClick={() => disconnect()}/>
+          <ModalBody >
             <VStack spacing={4}>
+            <Box
+              borderRadius="full"
+              border="2px dashed"
+              borderColor="gray.300"
+              w="100px"
+              h="100px"
+              display="flex"
+              justifyContent="center"
+              color="white"
+              alignItems="center"
+              position="relative"
+              overflow="hidden"
+              _hover={{
+                color: "green",
+                borderColor: "green",
+                '& > .delete-icon': {
+                  opacity: 1,
+                }
+              }}
+            >
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                ref={fileInputRef}
+                display="none"
+              />
+              {file ? (
+                <>
+                  <Image
+                    src={URL.createObjectURL(file)}
+                    alt="Profile preview"
+                    objectFit="cover"
+                    w="100%"
+                    h="100%"
+                  />
+                  <IconButton
+                    aria-label="Delete image"
+                    icon={<IoMdTrash />}
+                    position="absolute"
+                    top="50%"
+                    left="50%"
+                    transform="translate(-50%, -50%)"
+                    backgroundColor="rgba(0, 0, 0, 0.6)"
+                    color="white"
+                    size="sm"
+                    borderRadius="full"
+                    opacity={0}
+                    transition="opacity 0.2s"
+                    className="delete-icon"
+                    onClick={() => setFile(null)}
+                  />
+                </>
+              ) : (
+                <Icon
+                  as={IoMdCloudUpload}
+                  boxSize={6}
+                  cursor="pointer"
+                  onClick={() => fileInputRef.current?.click()}
+                />
+              )}
+            </Box>
               <Input 
                 placeholder="Enter your name" 
                 value={name}
                 onChange={(e) => setName(e.target.value)}
+                textColor="white"
+                _hover={{
+                  borderColor: "green",
+                }}
               />
-              <Box>
-                <Input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                  ref={fileInputRef}
-                  display="none"
-                />
-                <Button onClick={() => fileInputRef.current?.click()}>
-                  Choose Profile Picture
-                </Button>
-              </Box>
-              {file && (
-                <Image 
-                  src={URL.createObjectURL(file)} 
-                  alt="Profile preview" 
-                  boxSize="100px" 
-                  objectFit="cover" 
-                  borderRadius="full"
-                />
-              )}
               {uploadError && <Text color="red.500">{uploadError}</Text>}
             </VStack>
           </ModalBody>
 
-          <ModalFooter>
+          <ModalFooter justifyContent="center">
             <Button 
-              variant="outline" 
+              variant="ghost" 
               mr={3} 
               onClick={() => handleRegistration(true)}
               isLoading={isUploading}
+              textColor="white"
+              _hover={{
+                borderColor: "blue",
+                border: "solid"
+              }}
+              
             >
               Register as Artist
             </Button>
             <Button 
-              variant="outline" 
+              variant="ghost" 
               onClick={() => handleRegistration(false)}
               isLoading={isUploading}
+              textColor="white"
+              _hover={{
+                borderColor: "blue",
+                border: "solid"
+              }}
+              
             >
               Register as Listener
             </Button>

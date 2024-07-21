@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useEthereum } from './Context';
 import SongNFTABI from "../ABI/SongNFT.json";
 import { Contract, utils } from 'zksync-ethers';
@@ -19,7 +19,13 @@ interface Song {
 export const usePlaySong = () => {
     const [currentSong, setCurrentSong] = useState<Song | null>(null);
     const [message, setMessage] = useState("");
-    const { account, getSigner, getProvider } = useEthereum();
+    const {account, getSigner, getProvider } = useEthereum();
+
+    useEffect(() => {
+        if(account.isConnected === false) {
+            setCurrentSong(null);
+        }
+      },[account.isConnected]);
 
     const mintNFT = async (song: Song) => {
         const provider = await getProvider();
