@@ -27,7 +27,7 @@ import { IoMdCloudUpload, IoMdTrash } from "react-icons/io";
 
 
 export function Connect() {
-  const { account, connect, disconnect, getSigner, getProvider } = useEthereum();
+  const { account, connect, disconnect, getSigner, getProvider, switchNetwork } = useEthereum();
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [isConnecting, setIsConnecting] = useState(false);
   const [isloading, setIsLoading] = useState(false);
@@ -39,6 +39,7 @@ export function Connect() {
   const handleConnect = async () => {
     setIsConnecting(true);
     console.log('Connect');
+    await switchNetwork(300)
     await connect();
     setIsConnecting(false);
 

@@ -117,13 +117,6 @@ export const EthereumProvider = ({ children }: { children: React.ReactNode }) =>
     web3Provider?.off("network", onNetworkChange);
   }
 
-  // useEffect(() => {
-  //   connect();
-
-  //   return () => { // Clean-up on component unmount
-  //     disconnect();
-  //   }
-  // }, []);
 
   const switchNetwork = async (chainId: number) => {
     const chain = chains.find((chain: any) => chain.id === chainId);
