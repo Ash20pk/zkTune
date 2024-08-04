@@ -33,6 +33,7 @@ const ERC20_ABI = [
   "function approve(address spender, uint256 amount) returns (bool)",
   "function balanceOf(address account) view returns (uint256)",
   "function decimals() view returns (uint8)",
+  "function symbol() view returns (string memory)",
 ];
 
 export function TipArtist({ artistName, artistAddress }: TipArtistProps) {
@@ -54,6 +55,7 @@ export function TipArtist({ artistName, artistAddress }: TipArtistProps) {
       const provider = await getProvider();
       const signer = await getSigner();
       const gasPrice = await provider?.getGasPrice();
+      const tokenContract = new ethers.Contract(tokenAddress, ERC20_ABI, signer);
 
       if (tipType === 'ETH') {
         // estimate gasLimit via paymaster
@@ -89,7 +91,6 @@ export function TipArtist({ artistName, artistAddress }: TipArtistProps) {
           setIsLoading(false);
           return;
         }
-        const tokenContract = new ethers.Contract(tokenAddress, ERC20_ABI, signer);
         const amount = ethers.parseEther(tipAmount);
 
         // Encode the transfer function call
@@ -118,8 +119,9 @@ export function TipArtist({ artistName, artistAddress }: TipArtistProps) {
         const sentTx = await signer?.sendTransaction(tx);
         await sentTx?.wait();
       }
+      const symbol = await tokenContract.symbol();
 
-      alert(`Successfully tipped ${tipAmount} ${tipType} to ${artistName}`);
+      alert(`Successfully tipped ${tipAmount} ${symbol} to ${artistName}`);
       onClose();
     } catch (error) {
       console.error('Error tipping artist:', error);
@@ -145,7 +147,7 @@ export function TipArtist({ artistName, artistAddress }: TipArtistProps) {
                 <FormLabel color="white">Select tip type:</FormLabel>
                 <Select value={tipType} onChange={(e) => setTipType(e.target.value)} color="white">
                   <option value="ETH">ETH</option>
-                  <option value="ERC20">ERC20 Token</option>
+                  <option value="ERC20">Other ERC20 Token</option>
                 </Select>
               </FormControl>
               {tipType === 'ERC20' && (
