@@ -96,6 +96,12 @@ export function Connect() {
     }
   };
 
+  const handleModalClose = () => {
+    disconnect();
+    onClose();
+    
+  };
+
   const handleRegistration = async (isArtist: boolean) => {
     setIsLoading(true);
     let profileURI = '';
@@ -199,7 +205,7 @@ export function Connect() {
         </Button>
       )}
 
-      <Modal isOpen={isOpen} onClose={onClose}>
+      <Modal isOpen={isOpen} onClose={handleModalClose}>
         <ModalOverlay  backgroundColor="rgba(0, 0, 0, 0.6)" />
         <ModalContent bg="gray.900">
           <ModalHeader color="white" textAlign="center">Complete Your Profile</ModalHeader>

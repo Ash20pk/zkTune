@@ -142,7 +142,7 @@ export function MainContent() {
             </Link>
           </Flex>
         </Flex>
-        {account.isConnected ? (
+        {account.address ? (
           <>
             <Box mb={12}>
               <Heading size="lg" mb={6}>Popular Songs</Heading>
@@ -151,8 +151,8 @@ export function MainContent() {
                   <Box key={song.id.toString()} bg="gray.800" borderRadius="lg" overflow="hidden" transition="all 0.3s" _hover={{ bg: "gray.700", transform: "scale(1.05)" }} onClick={() => playSong(song)} cursor="pointer">
                     <Box position="relative">
                     <Skeleton isLoaded={!loading}>
-                      <Img src={song.cover} alt={song.title} />
-                      <Box position="absolute" top="0" left="0" right="0" bottom="0" bg="blackAlpha.600" opacity="0" transition="all 0.3s" _groupHover={{ opacity: 1 }}>
+                      <Img src={song.cover} alt={song.title} width="100%" height="100%" objectFit="cover"/>
+                      <Box position="absolute" top="0" left="0" right="0" bottom="0" bg="blackAlpha.600" opacity="0" transition="all 0.3s" _groupHover={{ opacity: 1 }} >
                         <Icon as={FaPlay} position="absolute" top="50%" left="50%" transform="translate(-50%, -50%)" boxSize={12} color="green.500" />
                       </Box>
                       </Skeleton>
